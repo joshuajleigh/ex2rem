@@ -3,6 +3,8 @@ Description=Helpful Reminding service
 
 [Service]
 Environment=ACTION=notify-send %s &
-ExecStart=/usr/local/bin/remind -z -k'${ACTION}' /home/jleigh/.reminders
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/<user>/Xauthority"
+ExecStart=/usr/local/bin/remind -z -k'${ACTION}' /home/<user>/.reminders
 Restart=always
 RestartSec=3

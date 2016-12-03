@@ -5,9 +5,9 @@
 NOTIFYCOM=notify-send
 
 # set the location of remind file
-REMINDFILE=/home/jleigh/.reminders
+REMINDFILE=/home/<user>/.reminders
 
 export DISPLAY=:0
-export XAUTHORITY=/home/jleigh.Xauthority
+export XAUTHORITY=/home/<user>/.Xauthority
 
 remind -z -k"$NOTIFYCOM %s &" $REMINDFILE
