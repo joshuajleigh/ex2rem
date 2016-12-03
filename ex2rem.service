@@ -1,0 +1,9 @@
+[Unit]
+Description=Exchange to Remind Converter
+
+[Service]
+Environment=URL=https://owa.leapfrogonline.com/EWS/Exchange.asmx
+Environment=UN=leapfrogonline\\jleigh
+Environment=PW=P3rV3r17473mV15
+Environment=FILE=/home/jleigh/.reminders
+ExecStart=/home/jleigh/bin/ex2rem.py -o URL -u UN -p PW -w FILE

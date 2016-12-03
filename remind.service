@@ -1,0 +1,8 @@
+[Unit]
+Description=Helpful Reminding service
+
+[Service]
+Environment=ACTION=notify-send %s &
+ExecStart=/usr/local/bin/remind -z -k'${ACTION}' /home/jleigh/.reminders
+Restart=always
+RestartSec=3
