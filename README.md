@@ -19,8 +19,10 @@ owa=<your exchange owa address> (often https://owa.domain/EWS/Exchange.asmx)
 ```
 
 Additionally I've included
-* ex2rem.service - a systemd example file to run the service
+* ex2rem.service - a systemd example file to run the service with naked vars
 * ex2rem.timer - a timer for said systemd service
+* exchange2reminder.service - a systemd example file using the config file
+* exchange2reminder.timer - another timer ^
 * [calendar](https://github.com/yggi49/obdaRemind/blob/master/obdaRemind.py) - a stolen python script to view remind calender in ncurses
 * remind-notify - a bash script to get desktop notifications for said calendar events
 * remind.service - a failed attempt to setup desktop notifications via systemd vs a bash startup file (If you can figure out how to make it work please let me know!)

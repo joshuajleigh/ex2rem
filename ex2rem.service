@@ -6,4 +6,4 @@ Environment=URL=https://owa.<whatever>.com/EWS/Exchange.asmx
 Environment=UN=<wherever//whoever>
 Environment=PW=<supersecretpassword>
 Environment=FILE=/home/<user>/.reminders
-ExecStart=/home/<user>/bin/ex2rem.py -o URL -u UN -p PW -w FILE
+ExecStart=<path-to-python3> <path-to-ex2rem.py> -o URL -u UN -p PW -w FILE
