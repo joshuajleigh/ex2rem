@@ -3,4 +3,4 @@ Description=Exchange to Remind Converter
 
 [Service]
 User=<user>
-ExecStart=<path-to-python3> <path-to-ex2rem.py> -c <path-to-config-file>
+ExecStart=<path to ex2rem.py file> -c <path to ex2rem.conf file>

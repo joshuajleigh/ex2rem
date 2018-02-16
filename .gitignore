@@ -1,0 +1,4 @@
+*.swp
+env/*
+ex2rem.conf.test
+reminders.test

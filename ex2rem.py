@@ -1,11 +1,10 @@
-#!/usr/bin/python3.5
+#!/usr/bin/python3
 
-import datetime
 import argparse
-import requests
 import configparser
-from pytz import timezone, utc
-from pyexchange import Exchange2010Service, ExchangeNTLMAuthConnection
+import requests
+import datetime
+import exchangelib
 
 REPORT=""
 VALUES={
@@ -27,7 +26,7 @@ def args():
     p.add_argument("--interval", "-i", help="time in minutes between notifications", default=3)
     p.add_argument("--ahead", "-a", help="time in minutes, how far ahead to start warning", default=15)
     p.add_argument("--owa", "-o", type=str, help="exchange owa address")
-    p.add_argument("--username", "-u", type=str, help="exchange usename in form of <domain>\\\<username>")
+    p.add_argument("--username", "-u", type=str, help="exchange usename")
     p.add_argument("--password", "-p", type=str, help="exchange password")
     p.add_argument("--write", "-w", help="file to write output to")
     return p.parse_args()
@@ -39,6 +38,7 @@ def read_config_file(conf):
         c.read(conf)
         return c
     except:
+        print("did not read a config file, is {} a file?".format(conf))
         return "filler"
 
 def validate_args(arg, REPORT):
@@ -46,8 +46,10 @@ def validate_args(arg, REPORT):
     conf=read_config_file(arg.config)
     for i in VALUES:
         try:
-            VALUES[i]=conf.get('config', i)
+            VALUES[i]=conf.get('ex2rem', i)
+#            print("found value {}".format(i))
         except:
+#            print("did not find value for {}".format(i))
             continue
 
     for key, value in VALUES.items():
@@ -78,8 +80,9 @@ def validate_args(arg, REPORT):
 
 def validateURL(URL):
     """verify the URL provided is (close) to a valid owa url"""
+    endpoint = "http://" + URL
     try:
-        request = requests.get(URL)
+        request = requests.get(endpoint)
         if request.status_code == 200:
             print('url is a valid site, but not exchange link')
             quit()
@@ -96,28 +99,33 @@ def validateURL(URL):
 
 def getEvents(VALUES):
     """get months events from exchange and write them to file"""
-    url = u'{s}'.format(s=VALUES['owa'])
-    username = u'{s}'.format(s=VALUES['username'])
-    password = u"{s}".format(s=VALUES['password'])
+    url = VALUES['owa']
+#    print(url)
+    username = VALUES['username']
+    password = VALUES['password']
     BEFORE = VALUES['before']
     FUTURE = VALUES['future']
 
     try:
-        connection = ExchangeNTLMAuthConnection(url=url, username=username, password=password)
-        service = Exchange2010Service(connection)
+        credentials = exchangelib.Credentials(username=username, password=password)
+        config = exchangelib.Configuration(server=url, credentials=credentials)
+        account = exchangelib.Account(primary_smtp_address=username, credentials=credentials, config=config)
 
-        local_tz = timezone("America/Chicago")
+        tz = exchangelib.EWSTimeZone.localzone()
+        right_now = tz.localize(exchangelib.EWSDateTime.now())
 
-        start = datetime.datetime.now() + datetime.timedelta(-BEFORE)
-        start = local_tz.localize(start)
-        start = start.astimezone(utc)
+        start = right_now - datetime.timedelta(days=7)
+#        print(start)
+        end = right_now + datetime.timedelta(days=7)
+#        print(end)
 
-        end = datetime.datetime.now() + datetime.timedelta(FUTURE)
-        end = local_tz.localize(end)
-        end = end.astimezone(utc)
+        allEvents = account.calendar.view(start=start, end=end)
+#        for item in allEvents:
+#            local_start = item.start.astimezone(tz=tz)
+#            local_end = item.end.astimezone(tz=tz)
+#            print("{} start={} end={}".format(item.subject, local_start, local_end))
 
-        eventsList = service.calendar().list_events(start=start, end=end, details=True)
-        return eventsList
+        return allEvents
     except:
         print("username or password incorrect")
         print("remember username should be in form of ")
@@ -125,26 +133,28 @@ def getEvents(VALUES):
         print("in config file user=<domain>\\<username>")
         quit()
 
-def convertList(eventsList, notify_start, notify_interval):
+def convertList(allEvents, notify_start, notify_interval):
     """converts times from universal to local time"""
-    local_tz = timezone("America/Chicago")
     full_calendar = ''
-    for event in eventsList.events:
-        start_local=event.start.astimezone(local_tz)
-        stop_local=event.end.astimezone(local_tz)
-        MSG=str(event.subject)
-        RAW_TIME=str(start_local).split(' ')
+    tz = exchangelib.EWSTimeZone.localzone()
+    for item in allEvents:
+#        print(item.subject)
+        local_start = item.start.astimezone(tz=tz)
+        MSG=str(item.subject)
+        RAW_TIME=str(local_start).split(' ')
         DATE=RAW_TIME[0]
         START_TIME=RAW_TIME[1][:-9]
-        full_calendar += "REM {date} AT {start_time} +{notify_start} *{notify_interval} SCHED _sfun MSG %a %2 % {message} %\n".format(
-        date=DATE, start_time=START_TIME, notify_start=notify_start, notify_interval=notify_interval, message=MSG)
+        full_calendar += "REM {date} AT {start_time} +{notify_start} *{notify_interval} SCHED _sfun MSG {message} %1\n".format(date=DATE, start_time=START_TIME, notify_start=notify_start, notify_interval=notify_interval, message=MSG)
+    print(full_calendar)
     return full_calendar
 
 def main():
     """ get args, confirm them, pull calendar data, write to a file"""
     ARGS=args()
+#    print(ARGS)
     VALUES=validate_args(ARGS, REPORT)
     validateURL(VALUES['owa'])
+    getEvents(VALUES)
     list_of_events=getEvents(VALUES)
     new_calendar=convertList(list_of_events, VALUES['ahead'], VALUES['interval'])
     print(REPORT + "replication complete " + str(datetime.datetime.now()))

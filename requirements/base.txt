@@ -1,0 +1,6 @@
+requests
+pytz
+pyexchange
+configparser
+bpython
+exchangelib
