@@ -1,7 +1,7 @@
 PYTHON := $(shell which python3)
 ENV := $(CURDIR)/env
 PIP := $(ENV)/bin/pip
-ENVPYTHON := env/bin/python
+ENVPYTHON := $(ENV)/bin/python
 
 default: help
 
